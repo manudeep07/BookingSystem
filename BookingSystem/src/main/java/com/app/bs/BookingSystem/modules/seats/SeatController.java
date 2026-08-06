@@ -5,6 +5,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/seats")
@@ -18,6 +21,12 @@ public class SeatController {
     public List<Seat> createSeats(@RequestBody CreateSeatRequestDTO createSeatRequestDTO){
         return seatService.createSeats(createSeatRequestDTO);
     }
+
+    @GetMapping("/{screenId}")
+    public List<Seat> getSeatsByScreenId(@PathVariable UUID screenId) {
+        return seatService.getSeatsByScreenId(screenId);
+    }
+    
 
 
 }
