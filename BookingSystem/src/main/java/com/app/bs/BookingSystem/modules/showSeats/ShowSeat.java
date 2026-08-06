@@ -34,4 +34,7 @@ public class ShowSeat {
 
     @Enumerated(EnumType.STRING)
     private ShowSeatStatus seatStatus = ShowSeatStatus.AVAILABLE;
+
+    @Version
+    private Long version;
 }

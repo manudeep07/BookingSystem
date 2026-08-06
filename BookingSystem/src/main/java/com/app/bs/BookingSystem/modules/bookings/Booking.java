@@ -1,6 +1,5 @@
 package com.app.bs.BookingSystem.modules.bookings;
 
-import com.app.bs.BookingSystem.modules.seats.Seat;
 import com.app.bs.BookingSystem.modules.shows.Show;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

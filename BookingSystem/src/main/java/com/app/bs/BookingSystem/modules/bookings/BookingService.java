@@ -12,12 +12,15 @@ import com.app.bs.BookingSystem.modules.shows.Show;
 import com.app.bs.BookingSystem.modules.shows.ShowRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.cglib.core.Local;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+
+import javax.management.RuntimeErrorException;
 
 @Service
 public class BookingService {
@@ -38,26 +41,29 @@ public class BookingService {
         this.bookingSeatRepository = bookingSeatRepository;
     }
 
+    @Transactional
     public Booking createBooking(CreateBookingRequestDTO createBookingRequestDTO){
         Show show = showRepository.findById(createBookingRequestDTO.getShowId())
                 .orElseThrow(()-> new RuntimeException("Show doesn't exist"));
 
         Booking bookingObj = mapToBooking(createBookingRequestDTO,show);
         bookingObj = bookingRepository.save(bookingObj);
-
         List<UUID> seatIds = createBookingRequestDTO.getSeatIds();
-        for(UUID seatId : seatIds){
-            Seat seat = seatRepository.findById(seatId)
-                    .orElseThrow(()->new RuntimeException("seatId cannot be empty"));
+        List<ShowSeat> showSeats = showSeatRepository.findByShowAndSeatIdInAndSeatStatus(show,seatIds,ShowSeatStatus.AVAILABLE);
+        if(showSeats.size()!=seatIds.size()) throw new RuntimeException("Partial Booking, Invalid Seat selection");
+        for(ShowSeat showSeat : showSeats){  
+            
+            try{
+                showSeat.setSeatStatus(ShowSeatStatus.RESERVED);
+                showSeatRepository.save(showSeat);
+            }catch(ObjectOptimisticLockingFailureException e){
+                throw new RuntimeException("Seat was reserved by another user.");
+            }
 
             BookingSeat bookingSeat = new BookingSeat();
-            bookingSeat.setSeat(seat);
+            bookingSeat.setSeat(showSeat.getSeat());
             bookingSeat.setBooking(bookingObj);
-            bookingSeatRepository.save(bookingSeat);
-
-            ShowSeat showSeat = showSeatRepository.findByShowAndSeat(show,seat);
-            showSeat.setSeatStatus(ShowSeatStatus.RESERVED);
-            showSeatRepository.save(showSeat);
+            bookingSeatRepository.save(bookingSeat); 
         }
     return bookingObj;
     }
@@ -105,7 +111,8 @@ public class BookingService {
                     bookingSeatRepository.findByBooking(booking);
 
             for (BookingSeat bookingSeat : bookingSeats) {
-
+                System.out.println(booking.getShow().getId());
+                System.out.println(bookingSeat.getSeat().getId());
                 ShowSeat showSeat =
                         showSeatRepository.findByShowAndSeat(
                                 booking.getShow(),

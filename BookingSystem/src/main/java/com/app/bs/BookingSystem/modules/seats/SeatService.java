@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class SeatService {
@@ -35,7 +36,11 @@ public class SeatService {
             }
         }
         seatRepository.saveAll(seats);
-        return seatRepository.findAllByScreen(screen);
+        return seatRepository.findByScreenId(screen.getId());
+    }
+
+    public List<Seat> getSeatsByScreenId(UUID screenId){
+        return seatRepository.findByScreenId(screenId);
     }
 
 }
