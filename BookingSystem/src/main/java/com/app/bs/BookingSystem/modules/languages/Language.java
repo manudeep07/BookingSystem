@@ -1,8 +1,6 @@
 package com.app.bs.BookingSystem.modules.languages;
 
-import com.app.bs.BookingSystem.modules.movies.Movie;
 import com.app.bs.BookingSystem.modules.shows.Show;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

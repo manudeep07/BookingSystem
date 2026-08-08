@@ -1,7 +1,6 @@
 package com.app.bs.BookingSystem.modules.bookingSeat;
 
 import com.app.bs.BookingSystem.modules.bookings.Booking;
-import com.app.bs.BookingSystem.modules.seats.Seat;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

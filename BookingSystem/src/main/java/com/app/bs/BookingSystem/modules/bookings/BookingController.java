@@ -1,9 +1,13 @@
 package com.app.bs.BookingSystem.modules.bookings;
 
-import com.app.bs.BookingSystem.modules.bookings.DTO.CreateBookingRequestDTO;
-import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.app.bs.BookingSystem.modules.bookings.DTO.CreateBookingRequestDTO;
+import com.app.bs.BookingSystem.modules.payments.DTO.CreateOrderResponseDto;
 
 @RestController
 @RequestMapping("/bookings")
@@ -13,12 +17,8 @@ public class BookingController {
         this.bookingService = bookingService;
     }
     @PostMapping()
-    public Booking createBooking(@RequestBody CreateBookingRequestDTO createBookingRequestDTO){
+    public  CreateOrderResponseDto createBooking(@RequestBody CreateBookingRequestDTO createBookingRequestDTO){
         return bookingService.createBooking(createBookingRequestDTO);
     }
 
-    @PatchMapping("/{bookingId}/{status}")
-    public Booking confirmBooking(@PathVariable UUID bookingId,@PathVariable String status){
-        return bookingService.confirmBooking(bookingId,status);
-    }
 }
