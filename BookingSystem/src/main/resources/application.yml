@@ -18,5 +18,9 @@ spring:
       hibernate:
         format_sql: true
 
+razorpay:
+  key-id : rzp_test_TMvd30sVLuJM3f
+  key-secret : DGmmrzBfYkBUki59XR6B73yi
+  
 server:
   port: 8080

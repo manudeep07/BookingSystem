@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -14,23 +16,26 @@ import java.util.UUID;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "show_seats",uniqueConstraints = {
-        @UniqueConstraint(name = "show_seats", columnNames = {"show_id","seat_id"})
+@Table(name = "show_seats", uniqueConstraints = {
+        @UniqueConstraint(name = "show_seats", columnNames = { "show_id", "seat_id" })
 })
 public class ShowSeat {
     @Id
     @GeneratedValue
     private UUID id;
 
-//    @SuppressWarnings("JpaDataSourceORMInspection")
+    // @SuppressWarnings("JpaDataSourceORMInspection")
     @ManyToOne
     @JoinColumn(name = "seat_id")
     private Seat seat;
 
-//    @SuppressWarnings("JpaDataSourceORMInspection")
+    // @SuppressWarnings("JpaDataSourceORMInspection")
     @ManyToOne
     @JoinColumn(name = "show_id")
     private Show show;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal price = BigDecimal.valueOf(100);
 
     @Enumerated(EnumType.STRING)
     private ShowSeatStatus seatStatus = ShowSeatStatus.AVAILABLE;

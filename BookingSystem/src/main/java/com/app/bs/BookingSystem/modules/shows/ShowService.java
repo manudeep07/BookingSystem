@@ -1,19 +1,16 @@
 package com.app.bs.BookingSystem.modules.shows;
 
+import org.springframework.stereotype.Service;
+
 import com.app.bs.BookingSystem.modules.languages.Language;
 import com.app.bs.BookingSystem.modules.languages.LanguageRepository;
 import com.app.bs.BookingSystem.modules.movies.Movie;
 import com.app.bs.BookingSystem.modules.movies.MovieRepository;
 import com.app.bs.BookingSystem.modules.screens.Screen;
 import com.app.bs.BookingSystem.modules.screens.ScreenRepository;
-import com.app.bs.BookingSystem.modules.seats.Seat;
 import com.app.bs.BookingSystem.modules.seats.SeatRepository;
-import com.app.bs.BookingSystem.modules.showSeats.ShowSeat;
 import com.app.bs.BookingSystem.modules.showSeats.ShowSeatService;
 import com.app.bs.BookingSystem.modules.shows.DTO.CreateShowRequestDTO;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class ShowService {
@@ -21,7 +18,6 @@ public class ShowService {
     private final MovieRepository movieRepository;
     private final LanguageRepository languageRepository;
     private final ScreenRepository screenRepository;
-    private final SeatRepository seatRepository;
     private final ShowSeatService showSeatService;
     public ShowService(ShowRepository showRepository,
                        MovieRepository movieRepository,
@@ -35,7 +31,6 @@ public class ShowService {
         this.movieRepository = movieRepository;
         this.languageRepository = languageRepository;
         this.screenRepository = screenRepository;
-        this.seatRepository = seatRepository;
         this.showSeatService = showSeatService;
     }
 

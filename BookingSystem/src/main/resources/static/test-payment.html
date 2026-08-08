@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Razorpay Test Payment</title>
+
+    <!-- Razorpay Checkout SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+
+<body>
+
+    <h1>Booking Payment Test</h1>
+
+    <button onclick="createBooking()">
+        Book & Pay
+    </button>
+
+    <script>
+
+        async function createBooking() {
+
+            // Change these according to your API
+            const bookingData = {
+                "showId" : "9ccd2cc4-a8ed-4384-a87e-63c11fa76c30",
+                 "seatIds": [
+                        "39bc302f-572e-4fd5-90ae-c021be5b8f5d"
+                    ]
+            };
+
+            try {
+
+                // 1. Ask your backend to create the booking
+                const response = await fetch("http://localhost:8080/bookings", {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify(bookingData)
+                });
+
+                if (!response.ok) {
+                    throw new Error("Booking creation failed");
+                }
+
+                // 2. Backend returns Razorpay order details
+                const data = await response.json();
+
+                console.log("Backend response:", data);
+
+                // 3. Open Razorpay Checkout
+                openRazorpayCheckout(data);
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert("Something went wrong: " + error.message);
+            }
+        }
+
+
+        function openRazorpayCheckout(data) {
+
+            const options = {
+
+                key: data.keyId,
+
+                amount: data.amount,
+
+                currency: "INR",
+
+                name: "Booking System",
+
+                description: "Movie Ticket Booking",
+
+                order_id: data.orderId,
+
+
+                handler: async function (response) {
+
+                    console.log("Razorpay response:", response);
+
+                    /*
+                        Razorpay gives us:
+
+                        response.razorpay_payment_id
+                        response.razorpay_order_id
+                        response.razorpay_signature
+                    */
+
+                    await verifyPayment(data.bookingId, response);
+                },
+
+
+                prefill: {
+                    name: "Test User",
+                    email: "test@example.com",
+                    contact: "9999999999"
+                },
+
+
+                theme: {
+                    color: "#3399cc"
+                }
+            };
+
+
+            const razorpay = new Razorpay(options);
+
+            razorpay.open();
+        }
+
+
+        async function verifyPayment(bookingId, response) {
+
+            const verificationData = {
+
+                bookingId: bookingId,
+
+                razorpayOrderId: response.razorpay_order_id,
+
+                razorpayPaymentId: response.razorpay_payment_id,
+
+                razorpaySignature: response.razorpay_signature
+            };
+
+
+            console.log(
+                "Sending verification to backend:",
+                verificationData
+            );
+
+
+            try {
+
+                const result = await fetch(
+                    "http://localhost:8080/payments/verify",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+
+                        body: JSON.stringify(verificationData)
+                    }
+                );
+
+
+                if (!result.ok) {
+                    throw new Error("Payment verification failed");
+                }
+
+
+                alert("Payment successful and verified! 🎉");
+
+            } catch (error) {
+
+                console.error(error);
+
+                alert(
+                    "Payment happened, but backend verification failed."
+                );
+            }
+        }
+
+    </script>
+
+</body>
+</html>
