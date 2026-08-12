@@ -54,7 +54,7 @@ public class BookingService {
         List<ShowSeat> showSeats = showSeatRepository.findByShowAndSeatIdInAndSeatStatus(show, seatIds,
                 ShowSeatStatus.AVAILABLE);
         if (showSeats.size() != seatIds.size())
-            throw new RuntimeException("Partial Booking, Invalid Seat selection");
+            throw new RuntimeException("seats are already booked/reserved by another user");
         List<BookingSeat> bookingSeats = new ArrayList<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
         for (ShowSeat showSeat : showSeats) {
@@ -85,17 +85,29 @@ public class BookingService {
     }
 
     @Transactional
-    public Booking confirmBooking(UUID bookingId) {
+    public Booking confirmBooking(UUID bookingId, String paymentStatus) {
 
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking id doesn't exist"));
-        booking.setStatus(BookingStatus.BOOKED);
+
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            throw new RuntimeException("Booking is not pending confirmation");
+        }
+
         List<BookingSeat> bookingSeats = bookingSeatRepository.findByBooking(booking);
 
-        for (BookingSeat bookingSeat : bookingSeats) {
-            Seat seat = bookingSeat.getSeat();
-            ShowSeat showSeat = showSeatRepository.findByShowAndSeat(booking.getShow(), seat);
-            showSeat.setSeatStatus(ShowSeatStatus.BOOKED);
+        if ("success".equals(paymentStatus)) {
+            booking.setStatus(BookingStatus.BOOKED);
+            for (BookingSeat bookingSeat : bookingSeats) {
+                ShowSeat showSeat = showSeatRepository.findByShowAndSeat(booking.getShow(), bookingSeat.getSeat());
+                showSeat.setSeatStatus(ShowSeatStatus.BOOKED);
+            }
+        } else {
+            booking.setStatus(BookingStatus.CANCELLED);
+            for (BookingSeat bookingSeat : bookingSeats) {
+                ShowSeat showSeat = showSeatRepository.findByShowAndSeat(booking.getShow(), bookingSeat.getSeat());
+                showSeat.setSeatStatus(ShowSeatStatus.AVAILABLE);
+            }
         }
 
         return booking;
