@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import com.app.bs.BookingSystem.modules.shows.Show;
+import com.app.bs.BookingSystem.modules.user.User;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
@@ -37,12 +38,16 @@ public class Booking {
     @JsonIgnore
     private Show show;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Enumerated(EnumType.STRING)
     private BookingStatus status;
 
     @Column(nullable = false, precision = 10, scale = 2, name = "total_amount")
     private BigDecimal totalAmount;
-
+    
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 }

@@ -39,12 +39,18 @@ public class User {
     @Column(unique = true)
     private String email;
 
-    @NotBlank(message = "Mobile number cannot be empty")
-    @Pattern(
-        regexp = "^[0-9]{10}$",
-        message = "Mobile number must contain exactly 10 digits"
-    )
-    @Column(unique = true)
-    private String mobileNumber;
+    // @NotBlank(message = "Mobile number cannot be empty")
+    // @Pattern(
+    //     regexp = "^[0-9]{10}$",
+    //     message = "Mobile number must contain exactly 10 digits"
+    // )
+    // @Column(unique = true)
+    // private String mobileNumber;
+
+    @NotBlank(message = "password cannot be empty")
+    private String password;
+
+    @OneToMany(mappedBy = "user")
+    private List<Booking> bookings;
 
 }

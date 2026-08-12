@@ -22,5 +22,8 @@ razorpay:
   key-id : rzp_test_TMvd30sVLuJM3f
   key-secret : DGmmrzBfYkBUki59XR6B73yi
   
+logging:
+  level:
+    org.springframework.security: TRACE
 server:
   port: 8080

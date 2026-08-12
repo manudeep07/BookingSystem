@@ -15,6 +15,7 @@ import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
 import com.razorpay.Utils;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -56,7 +57,12 @@ public class PaymentService {
         return payment;
     }
 
+    @Transactional
     public boolean verifyPayment(VerifyPaymentRequestDto dto) {
+        Payment payment = paymentRepository.findByRazorPayOrderId(dto.getRazorpayOrderId());
+        if (payment == null || !payment.getBooking().getId().equals(dto.getBookingId())) {
+            return false; 
+        }
 
         String payload = dto.getRazorpayOrderId()
                 + "|"
@@ -71,13 +77,12 @@ public class PaymentService {
 
             if (signatureIsValid) {
 
-                Payment payment = paymentRepository.findByRazorPayOrderId(
-                        dto.getRazorpayOrderId());
-
                 payment.setRazorPayPaymentId(
                         dto.getRazorpayPaymentId());
 
                 payment.setPaymentStatus(PaymentStatus.SUCCESS);
+            }else{
+                payment.setPaymentStatus(PaymentStatus.FAILED);
             }
 
             return signatureIsValid;

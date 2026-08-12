@@ -24,7 +24,9 @@ public class PaymentController {
    public boolean verifyPayment(@RequestBody VerifyPaymentRequestDto verifyPaymentRequestDto) {
        boolean signatureIsValid = paymentService.verifyPayment(verifyPaymentRequestDto);
        if(signatureIsValid){
-        bookingService.confirmBooking(verifyPaymentRequestDto.getBookingId());
+        bookingService.confirmBooking(verifyPaymentRequestDto.getBookingId(),"success");
+       }else{
+        bookingService.confirmBooking(verifyPaymentRequestDto.getBookingId(),"failed");
        }
       return signatureIsValid;
    }
