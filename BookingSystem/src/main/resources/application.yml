@@ -25,5 +25,10 @@ razorpay:
 logging:
   level:
     org.springframework.security: TRACE
+
+jwt:
+  secret: your-super-secret-key-that-is-long-enough-for-hs256
+  expiration: 3600000
+  
 server:
   port: 8080
