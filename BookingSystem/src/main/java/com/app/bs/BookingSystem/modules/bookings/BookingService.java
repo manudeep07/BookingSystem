@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.app.bs.BookingSystem.modules.bookingSeat.BookingSeat;
 import com.app.bs.BookingSystem.modules.bookingSeat.BookingSeatRepository;
+import com.app.bs.BookingSystem.modules.bookings.DTO.CancelBookingRequestDTO;
 import com.app.bs.BookingSystem.modules.bookings.DTO.CreateBookingRequestDTO;
 import com.app.bs.BookingSystem.modules.payments.PaymentService;
 import com.app.bs.BookingSystem.modules.payments.DTO.CreateOrderResponseDto;
@@ -86,26 +89,44 @@ public class BookingService {
 
     @Transactional
     public Booking confirmBooking(UUID bookingId, String paymentStatus) {
-
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking id doesn't exist"));
 
-        if (booking.getStatus() != BookingStatus.PENDING) {
-            throw new RuntimeException("Booking is not pending confirmation");
+        if (booking.getStatus() != BookingStatus.PENDING && booking.getStatus() != BookingStatus.EXPIRED) {
+            throw new RuntimeException("Booking is no longer pending ");
         }
 
         List<BookingSeat> bookingSeats = bookingSeatRepository.findByBooking(booking);
-
+        List<Seat> seats = bookingSeats.stream()
+                .map(BookingSeat::getSeat)
+                .toList();
+        List<ShowSeat> showSeats = showSeatRepository.findByShowAndSeatIn(booking.getShow(), seats);
         if ("success".equals(paymentStatus)) {
-            booking.setStatus(BookingStatus.BOOKED);
-            for (BookingSeat bookingSeat : bookingSeats) {
-                ShowSeat showSeat = showSeatRepository.findByShowAndSeat(booking.getShow(), bookingSeat.getSeat());
-                showSeat.setSeatStatus(ShowSeatStatus.BOOKED);
+            if (booking.getStatus() == BookingStatus.EXPIRED) {
+                ArrayList<ShowSeat> tempShowSeats = new ArrayList<>();
+                for (ShowSeat showSeat : showSeats) {
+                    if (showSeat.getSeatStatus() != ShowSeatStatus.AVAILABLE) {
+                        for (ShowSeat ss : tempShowSeats) {
+                            ss.setSeatStatus(ShowSeatStatus.AVAILABLE);
+                        }
+                        booking.setStatus(BookingStatus.FAILED);
+                        paymentService.refundPayment(booking);
+                        return booking;
+                    } else {
+                        showSeat.setSeatStatus(ShowSeatStatus.BOOKED);
+                        tempShowSeats.add(showSeat);
+                    }
+                }
+                booking.setStatus(BookingStatus.BOOKED);
+            } else {
+                for (ShowSeat showSeat : showSeats) {
+                    showSeat.setSeatStatus(ShowSeatStatus.BOOKED);
+                }
+                booking.setStatus(BookingStatus.BOOKED);
             }
         } else {
-            booking.setStatus(BookingStatus.CANCELLED);
-            for (BookingSeat bookingSeat : bookingSeats) {
-                ShowSeat showSeat = showSeatRepository.findByShowAndSeat(booking.getShow(), bookingSeat.getSeat());
+            booking.setStatus(BookingStatus.FAILED);
+            for (ShowSeat showSeat : showSeats) {
                 showSeat.setSeatStatus(ShowSeatStatus.AVAILABLE);
             }
         }
@@ -116,22 +137,25 @@ public class BookingService {
     @Scheduled(fixedRate = 60000)
     @Transactional
     public void expireBooking() {
-
         List<Booking> pendingBookings = bookingRepository.findAllByStatusAndExpiresAtBefore(
                 BookingStatus.PENDING,
                 LocalDateTime.now());
 
-        for (Booking pendingBooking : pendingBookings) {
+        if (pendingBookings.isEmpty())
+            return;
 
+        List<BookingSeat> allBookingSeats = bookingSeatRepository.findByBookingIn(pendingBookings);
+        Map<Booking, List<BookingSeat>> seatsByBooking = allBookingSeats.stream()
+                .collect(Collectors.groupingBy(BookingSeat::getBooking));
+
+        for (Booking pendingBooking : pendingBookings) {
             pendingBooking.setStatus(BookingStatus.EXPIRED);
 
-            List<BookingSeat> bookingSeats = bookingSeatRepository.findByBooking(pendingBooking);
+            List<BookingSeat> bookingSeats = seatsByBooking.getOrDefault(pendingBooking, List.of());
+            List<Seat> seats = bookingSeats.stream().map(BookingSeat::getSeat).toList();
+            List<ShowSeat> showSeats = showSeatRepository.findByShowAndSeatIn(pendingBooking.getShow(), seats);
 
-            for (BookingSeat bookingSeat : bookingSeats) {
-                ShowSeat showSeat = showSeatRepository.findByShowAndSeat(
-                        pendingBooking.getShow(),
-                        bookingSeat.getSeat());
-
+            for (ShowSeat showSeat : showSeats) {
                 showSeat.setSeatStatus(ShowSeatStatus.AVAILABLE);
             }
         }
@@ -142,6 +166,40 @@ public class BookingService {
         booking.setShow(show);
         booking.setStatus(BookingStatus.PENDING);
         booking.setExpiresAt(LocalDateTime.now().plusMinutes(5));
+        return booking;
+    }
+
+    @Transactional
+    public Booking cancelBooking(CancelBookingRequestDTO cancelBookingRequestDTO) {
+        Booking booking = bookingRepository
+                .findById(cancelBookingRequestDTO.getBookingId())
+                .orElseThrow(() -> new RuntimeException("Booking doesn't exists"));
+
+        if (booking.getStatus() != BookingStatus.BOOKED) {
+            throw new RuntimeException("The tickets are not yet booked");
+        }
+
+        Show show = booking.getShow();
+        LocalDateTime currentTime = LocalDateTime.now();
+        LocalDateTime showTime = show.getStartTime();
+
+        if (showTime.isBefore(currentTime)) {
+            throw new RuntimeException("Show is completed, cannot cancel");
+        }
+
+        List<BookingSeat> bookingSeats = bookingSeatRepository.findByBooking(booking);
+        List<Seat> seats = bookingSeats.stream()
+                .map(BookingSeat::getSeat)
+                .toList();
+        List<ShowSeat> showSeats = showSeatRepository.findByShowAndSeatIn(show, seats);
+
+        for (ShowSeat showSeat : showSeats) {
+            showSeat.setSeatStatus(ShowSeatStatus.AVAILABLE);
+        }
+
+        booking.setStatus(BookingStatus.CANCELLED);
+        paymentService.refundPayment(booking);
+
         return booking;
     }
 

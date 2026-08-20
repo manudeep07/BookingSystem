@@ -10,8 +10,8 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface ShowSeatRepository extends JpaRepository<ShowSeat, UUID> {
     ShowSeat findByShowAndSeat(Show show, Seat seat);   
+    List<ShowSeat> findByShowAndSeatIn(Show show, List<Seat> seats);
     List<ShowSeat> findByShow(Show show);
-    
     List<ShowSeat> findByShowAndSeatIdInAndSeatStatus(
         Show show,
         List<UUID> seatIds,

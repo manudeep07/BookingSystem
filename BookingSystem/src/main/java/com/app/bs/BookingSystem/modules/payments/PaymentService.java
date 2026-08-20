@@ -94,4 +94,29 @@ public class PaymentService {
         }
     }
 
+    public void refundPayment(Booking booking) {
+    Payment payment = paymentRepository.findByBooking(booking);
+
+    if (payment == null || payment.getPaymentStatus() != PaymentStatus.SUCCESS) {
+        // nothing was actually captured for this booking — nothing to refund
+        return;
+    }
+
+    try {
+        JSONObject options = new JSONObject();
+        options.put("amount", booking.getTotalAmount()
+                .multiply(BigDecimal.valueOf(100))
+                .intValueExact()); // full refund, in paise
+        options.put("speed", "normal");
+
+        razorpayClient.payments.refund(payment.getRazorPayPaymentId(), options);
+
+        payment.setPaymentStatus(PaymentStatus.REFUND);
+        paymentRepository.save(payment);
+
+    } catch (RazorpayException e) {
+        throw new RuntimeException("Refund failed for booking " + booking.getId(), e);
+    }
+}
+
 }
