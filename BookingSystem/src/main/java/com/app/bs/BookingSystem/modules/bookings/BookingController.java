@@ -25,7 +25,7 @@ public class BookingController {
     }
 
     @PostMapping("/cancel")
-    public String cancelBooking(@RequestBody CancelBookingRequestDTO cancelBookingRequestDTO ) {
+    public Booking cancelBooking(@RequestBody CancelBookingRequestDTO cancelBookingRequestDTO ) {
        
         return bookingService.cancelBooking(cancelBookingRequestDTO);
     }
