@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.app.bs.BookingSystem.modules.bookings.Booking;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -48,6 +49,7 @@ public class User {
     // private String mobileNumber;
 
     @NotBlank(message = "password cannot be empty")
+    // @JsonIgnore 
     private String password;
 
     @OneToMany(mappedBy = "user")

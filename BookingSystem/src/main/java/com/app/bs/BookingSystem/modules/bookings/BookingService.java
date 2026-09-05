@@ -49,6 +49,7 @@ public class BookingService {
 
     @Transactional
     public CreateOrderResponseDto createBooking(CreateBookingRequestDTO createBookingRequestDTO) {
+
         Show show = showRepository.findById(createBookingRequestDTO.getShowId())
                 .orElseThrow(() -> new RuntimeException("Show doesn't exist"));
 
@@ -58,6 +59,7 @@ public class BookingService {
                 ShowSeatStatus.AVAILABLE);
         if (showSeats.size() != seatIds.size())
             throw new RuntimeException("seats are already booked/reserved by another user");
+        
         List<BookingSeat> bookingSeats = new ArrayList<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
         for (ShowSeat showSeat : showSeats) {

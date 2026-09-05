@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+../booking-system-frontend/
+../.vscode/
+db.sql
+/BookingSystem/BookingSystem/src/main/resources/application.yml

@@ -21,6 +21,7 @@ public class TheaterController {
         Theater response = theaterService.createTheater(theater);
         return response;
     }
+    
     @GetMapping
     List<Theater> getTheaters(){
         List<Theater> response = theaterService.getTheaters();
