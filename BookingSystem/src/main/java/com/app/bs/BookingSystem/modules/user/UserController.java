@@ -30,7 +30,7 @@ public class UserController {
     }
     
     @GetMapping()
-    public List<User> getUsers() {
+    public List<UserResponseDto> getUsers() {
         return userService.getUsers();
     }
 

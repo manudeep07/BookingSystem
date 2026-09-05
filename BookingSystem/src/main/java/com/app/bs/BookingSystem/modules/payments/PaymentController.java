@@ -1,17 +1,16 @@
 package com.app.bs.BookingSystem.modules.payments;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.app.bs.BookingSystem.modules.bookings.BookingService;
 import com.app.bs.BookingSystem.modules.payments.DTO.VerifyPaymentRequestDto;
-import com.app.bs.BookingSystem.modules.user.User;
+import com.app.bs.BookingSystem.modules.user.CustomUserDetails;
 
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-
 
 @RestController
 @RequestMapping("/payments")
@@ -20,17 +19,18 @@ public class PaymentController {
 
    private final PaymentService paymentService;
    private final BookingService bookingService;
-   
+
    @PostMapping("/verify")
-   public boolean verifyPayment(@RequestBody VerifyPaymentRequestDto verifyPaymentRequestDto) {
-       boolean signatureIsValid = paymentService.verifyPayment(verifyPaymentRequestDto);
-       if(signatureIsValid){
-        bookingService.confirmBooking(verifyPaymentRequestDto.getBookingId(),"success");
-       }else{
-        bookingService.confirmBooking(verifyPaymentRequestDto.getBookingId(),"failed");
-       }
+   public boolean verifyPayment(@RequestBody VerifyPaymentRequestDto verifyPaymentRequestDto,
+         @AuthenticationPrincipal CustomUserDetails userDetails
+   ) {
+      boolean signatureIsValid = paymentService.verifyPayment(verifyPaymentRequestDto);
+      if (signatureIsValid) {
+         bookingService.confirmBooking(verifyPaymentRequestDto.getBookingId(), "success",userDetails.getUser());
+      } else {
+         bookingService.confirmBooking(verifyPaymentRequestDto.getBookingId(), "failed",userDetails.getUser());
+      }
       return signatureIsValid;
    }
-   
-    
+
 }

@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.AuthenticatedPrincipal;
 import org.springframework.stereotype.Service;
 
 import com.app.bs.BookingSystem.modules.bookingSeat.BookingSeat;
@@ -91,7 +92,7 @@ public class BookingService {
     }
 
     @Transactional
-    public Booking confirmBooking(UUID bookingId, String paymentStatus) {
+    public Booking confirmBooking(UUID bookingId, String paymentStatus,User user) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking id doesn't exist"));
 
@@ -99,9 +100,9 @@ public class BookingService {
             throw new RuntimeException("Booking is no longer pending ");
         }
 
-        // if (!booking.getUser().getId().equals(user.getId())) {
-        //     throw new RuntimeException("You don't own this booking");
-        // }
+        if (!booking.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("You don't own this booking");
+        }
 
         List<BookingSeat> bookingSeats = bookingSeatRepository.findByBooking(booking);
         List<Seat> seats = bookingSeats.stream()
@@ -178,7 +179,9 @@ public class BookingService {
     }
 
     @Transactional
-    public Booking cancelBooking(CancelBookingRequestDTO cancelBookingRequestDTO) {
+    public Booking cancelBooking(CancelBookingRequestDTO cancelBookingRequestDTO,
+        User user
+    ) {
         Booking booking = bookingRepository
                 .findById(cancelBookingRequestDTO.getBookingId())
                 .orElseThrow(() -> new RuntimeException("Booking doesn't exists"));
@@ -186,6 +189,11 @@ public class BookingService {
         if (booking.getStatus() != BookingStatus.BOOKED) {
             throw new RuntimeException("The tickets are not yet booked");
         }
+
+         if (!booking.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("You don't own this booking");
+        }
+
 
         Show show = booking.getShow();
         LocalDateTime currentTime = LocalDateTime.now();

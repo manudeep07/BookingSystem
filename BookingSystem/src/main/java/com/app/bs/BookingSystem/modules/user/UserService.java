@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import com.app.bs.BookingSystem.modules.bookings.BookingRepository;
 import com.app.bs.BookingSystem.modules.user.DTO.UserResponseDto;
 
 import lombok.RequiredArgsConstructor;
@@ -15,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final BookingRepository bookingRepository;
     private final PasswordEncoder passwordEncoder;
 
     public UserResponseDto createUser(User user) {
@@ -28,8 +26,9 @@ public class UserService {
         return mapTouserResponseDto(user);
     }
 
-    public List<User> getUsers() {
-        return userRepository.findAll();
+    public List<UserResponseDto> getUsers() {
+        List<User> users= userRepository.findAll();
+        return users.stream().map(x->mapTouserResponseDto(x)).toList();
     }
 
     public UserResponseDto mapTouserResponseDto(User user) {
