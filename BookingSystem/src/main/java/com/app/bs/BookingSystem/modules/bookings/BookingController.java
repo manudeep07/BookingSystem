@@ -29,9 +29,11 @@ public class BookingController {
     }
 
     @PostMapping("/cancel")
-    public Booking cancelBooking(@RequestBody CancelBookingRequestDTO cancelBookingRequestDTO ) {
+    public Booking cancelBooking(@RequestBody CancelBookingRequestDTO cancelBookingRequestDTO,
+        @AuthenticationPrincipal CustomUserDetails userDetails
+     ) {
        
-        return bookingService.cancelBooking(cancelBookingRequestDTO);
+        return bookingService.cancelBooking(cancelBookingRequestDTO,userDetails.getUser());
     }
     
 
