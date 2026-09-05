@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.app.bs.BookingSystem.modules.bookings.BookingService;
 import com.app.bs.BookingSystem.modules.payments.DTO.VerifyPaymentRequestDto;
+import com.app.bs.BookingSystem.modules.user.User;
 
 import lombok.RequiredArgsConstructor;
 
