@@ -19,14 +19,14 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
-   @PostMapping("/login")
-public LoginResponse login(@RequestBody LoginRequest request) {
-    Authentication authResult = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+    @PostMapping("/login")
+    public LoginResponse login(@RequestBody LoginRequest request) {
+        Authentication authResult = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
-    UserDetails userDetails = (UserDetails) authResult.getPrincipal();
-    String token = jwtService.generateToken(userDetails);
+        UserDetails userDetails = (UserDetails) authResult.getPrincipal();
+        String token = jwtService.generateToken(userDetails);
 
-    return new LoginResponse(token);
-}
+        return new LoginResponse(token);
+    }
 }

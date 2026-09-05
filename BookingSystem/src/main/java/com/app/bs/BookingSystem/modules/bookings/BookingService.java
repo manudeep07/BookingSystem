@@ -25,6 +25,7 @@ import com.app.bs.BookingSystem.modules.showSeats.ShowSeatRepository;
 import com.app.bs.BookingSystem.modules.showSeats.ShowSeatStatus;
 import com.app.bs.BookingSystem.modules.shows.Show;
 import com.app.bs.BookingSystem.modules.shows.ShowRepository;
+import com.app.bs.BookingSystem.modules.user.User;
 import com.razorpay.RazorpayException;
 
 import jakarta.transaction.Transactional;
@@ -48,18 +49,18 @@ public class BookingService {
     }
 
     @Transactional
-    public CreateOrderResponseDto createBooking(CreateBookingRequestDTO createBookingRequestDTO) {
+    public CreateOrderResponseDto createBooking(CreateBookingRequestDTO createBookingRequestDTO, User user) {
 
         Show show = showRepository.findById(createBookingRequestDTO.getShowId())
                 .orElseThrow(() -> new RuntimeException("Show doesn't exist"));
 
-        Booking booking = mapToBooking(createBookingRequestDTO, show);
+        Booking booking = mapToBooking(createBookingRequestDTO, show, user);
         List<UUID> seatIds = createBookingRequestDTO.getSeatIds();
         List<ShowSeat> showSeats = showSeatRepository.findByShowAndSeatIdInAndSeatStatus(show, seatIds,
                 ShowSeatStatus.AVAILABLE);
         if (showSeats.size() != seatIds.size())
             throw new RuntimeException("seats are already booked/reserved by another user");
-        
+
         List<BookingSeat> bookingSeats = new ArrayList<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
         for (ShowSeat showSeat : showSeats) {
@@ -97,6 +98,10 @@ public class BookingService {
         if (booking.getStatus() != BookingStatus.PENDING && booking.getStatus() != BookingStatus.EXPIRED) {
             throw new RuntimeException("Booking is no longer pending ");
         }
+
+        // if (!booking.getUser().getId().equals(user.getId())) {
+        //     throw new RuntimeException("You don't own this booking");
+        // }
 
         List<BookingSeat> bookingSeats = bookingSeatRepository.findByBooking(booking);
         List<Seat> seats = bookingSeats.stream()
@@ -163,9 +168,10 @@ public class BookingService {
         }
     }
 
-    public Booking mapToBooking(CreateBookingRequestDTO createBookingRequestDTO, Show show) {
+    public Booking mapToBooking(CreateBookingRequestDTO createBookingRequestDTO, Show show, User user) {
         Booking booking = new Booking();
         booking.setShow(show);
+        booking.setUser(user);
         booking.setStatus(BookingStatus.PENDING);
         booking.setExpiresAt(LocalDateTime.now().plusMinutes(5));
         return booking;
