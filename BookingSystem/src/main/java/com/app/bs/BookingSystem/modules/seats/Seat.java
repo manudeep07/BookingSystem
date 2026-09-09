@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import java.util.UUID;
 
 @Entity
@@ -16,15 +15,17 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "seats")
+
 public class Seat {
+
     @Id
     @GeneratedValue
     private UUID id;
-
     private String name;
-
+    private  String category;
     @ManyToOne
     @JoinColumn(name = "screen_id")
     @JsonIgnore
     private Screen screen;
+
 }
