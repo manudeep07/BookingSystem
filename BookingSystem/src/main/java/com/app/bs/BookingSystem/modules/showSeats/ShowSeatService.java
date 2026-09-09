@@ -23,12 +23,7 @@ public class ShowSeatService {
     }
     public void createShowSeats(Show show , Screen screen){
         List<Seat> seats = seatRepository.findByScreenId(screen.getId());
-        for(Seat seat : seats){
-            ShowSeat showSeat = new ShowSeat();
-            showSeat.setShow(show);
-            showSeat.setSeat(seat);
-            showSeatRepository.save(showSeat);
-        }
+        List<String> categories = 
 
     }
 
