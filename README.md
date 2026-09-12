@@ -173,8 +173,8 @@ jwt:
   expiration: 3600000  # 1 hour
 
 razorpay:
-  key-id: rzp_test_TMvd30sVLuJM3f
-  key-secret: DGmmrzBfYkBUki59XR6B73yi
+  key-id: your_key_id
+  key-secret: your_key_secret
 
 booking:
   expiry-minutes: 5  # Booking expires in 5 minutes if payment not completed
