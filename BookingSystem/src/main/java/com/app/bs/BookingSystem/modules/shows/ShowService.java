@@ -34,15 +34,16 @@ public class ShowService {
         this.showSeatService = showSeatService;
     }
 
-    public Show createShow(CreateShowRequestDTO createShowRequestDTO){
-        Show showCreated = mapToShow(createShowRequestDTO);
-        showCreated = showRepository.save(showCreated);
-        Screen screen = screenRepository.findById(createShowRequestDTO.getScreen_id())
-                .orElseThrow(()->new RuntimeException("Screen doesn't exist"));
+    public Show createShow(CreateShowRequestDTO createShowRequestDTO) {
+    Show showCreated = mapToShow(createShowRequestDTO);
+    showCreated = showRepository.save(showCreated);
 
-        showSeatService.createShowSeats(showCreated,screen);
-        return showCreated;
-    }
+    Screen screen = screenRepository.findById(createShowRequestDTO.getScreen_id())
+            .orElseThrow(() -> new RuntimeException("Screen doesn't exist"));
+
+    showSeatService.createShowSeats(showCreated, screen, createShowRequestDTO.getCategoryToPrices());
+    return showCreated;
+}
 
     public Show mapToShow(CreateShowRequestDTO createShowRequestDTO){
         Movie movie = movieRepository.findById(createShowRequestDTO.getMovie_id()).orElseThrow(()->new RuntimeException("Movie doesn't exists"));

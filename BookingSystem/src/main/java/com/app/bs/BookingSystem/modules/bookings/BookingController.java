@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.app.bs.BookingSystem.modules.bookings.DTO.BookingResponseDto;
 import com.app.bs.BookingSystem.modules.bookings.DTO.CancelBookingRequestDTO;
 import com.app.bs.BookingSystem.modules.bookings.DTO.CreateBookingRequestDTO;
 import com.app.bs.BookingSystem.modules.payments.DTO.CreateOrderResponseDto;
@@ -29,7 +30,7 @@ public class BookingController {
     }
 
     @PostMapping("/cancel")
-    public Booking cancelBooking(@RequestBody CancelBookingRequestDTO cancelBookingRequestDTO,
+    public BookingResponseDto cancelBooking(@RequestBody CancelBookingRequestDTO cancelBookingRequestDTO,
         @AuthenticationPrincipal CustomUserDetails userDetails
      ) {
        

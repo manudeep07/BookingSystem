@@ -35,7 +35,7 @@ public class ShowSeat {
     private Show show;
 
     @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal price = BigDecimal.valueOf(100);
+    private BigDecimal price;
 
     @Enumerated(EnumType.STRING)
     private ShowSeatStatus seatStatus = ShowSeatStatus.AVAILABLE;
