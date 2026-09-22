@@ -10,11 +10,12 @@ import java.util.stream.Collectors;
 
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.core.AuthenticatedPrincipal;
 import org.springframework.stereotype.Service;
 
+import com.app.bs.BookingSystem.exception.ForbiddenException;
 import com.app.bs.BookingSystem.modules.bookingSeat.BookingSeat;
 import com.app.bs.BookingSystem.modules.bookingSeat.BookingSeatRepository;
+import com.app.bs.BookingSystem.modules.bookings.DTO.BookingResponseDto;
 import com.app.bs.BookingSystem.modules.bookings.DTO.CancelBookingRequestDTO;
 import com.app.bs.BookingSystem.modules.bookings.DTO.CreateBookingRequestDTO;
 import com.app.bs.BookingSystem.modules.payments.PaymentService;
@@ -92,7 +93,7 @@ public class BookingService {
     }
 
     @Transactional
-    public Booking confirmBooking(UUID bookingId, String paymentStatus,User user) {
+    public BookingResponseDto confirmBooking(UUID bookingId, String paymentStatus, User user) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking id doesn't exist"));
 
@@ -101,7 +102,7 @@ public class BookingService {
         }
 
         if (!booking.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("You don't own this booking");
+            throw new ForbiddenException("You don't own this booking");
         }
 
         List<BookingSeat> bookingSeats = bookingSeatRepository.findByBooking(booking);
@@ -119,7 +120,7 @@ public class BookingService {
                         }
                         booking.setStatus(BookingStatus.FAILED);
                         paymentService.refundPayment(booking);
-                        return booking;
+                        return mapToBookingResponseDto(booking);
                     } else {
                         showSeat.setSeatStatus(ShowSeatStatus.BOOKED);
                         tempShowSeats.add(showSeat);
@@ -139,7 +140,7 @@ public class BookingService {
             }
         }
 
-        return booking;
+        return mapToBookingResponseDto(booking);
     }
 
     @Scheduled(fixedRate = 60000)
@@ -179,9 +180,8 @@ public class BookingService {
     }
 
     @Transactional
-    public Booking cancelBooking(CancelBookingRequestDTO cancelBookingRequestDTO,
-        User user
-    ) {
+    public BookingResponseDto cancelBooking(CancelBookingRequestDTO cancelBookingRequestDTO,
+            User user) {
         Booking booking = bookingRepository
                 .findById(cancelBookingRequestDTO.getBookingId())
                 .orElseThrow(() -> new RuntimeException("Booking doesn't exists"));
@@ -190,10 +190,9 @@ public class BookingService {
             throw new RuntimeException("The tickets are not yet booked");
         }
 
-         if (!booking.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("You don't own this booking");
+        if (!booking.getUser().getId().equals(user.getId())) {
+            throw new ForbiddenException("You don't own this booking");
         }
-
 
         Show show = booking.getShow();
         LocalDateTime currentTime = LocalDateTime.now();
@@ -216,7 +215,15 @@ public class BookingService {
         booking.setStatus(BookingStatus.CANCELLED);
         paymentService.refundPayment(booking);
 
-        return booking;
+        return mapToBookingResponseDto(booking);
+    }
+
+    public BookingResponseDto mapToBookingResponseDto(Booking booking) {
+        return new BookingResponseDto(
+                booking.getId(),
+                booking.getStatus(),
+                booking.getTotalAmount(),
+                booking.getExpiresAt());
     }
 
 }
