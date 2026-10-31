@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.app.bs.BookingSystem.modules.user.DTO.CreateUserRequestDto;
 import com.app.bs.BookingSystem.modules.user.DTO.UserResponseDto;
 
 import lombok.RequiredArgsConstructor;
@@ -16,12 +17,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserResponseDto createUser(User user) {
+    public UserResponseDto createUser(CreateUserRequestDto createUserRequestDto) {
 
-        String encodedPassword = passwordEncoder.encode(user.getPassword());
+        String encodedPassword = passwordEncoder.encode(createUserRequestDto.getPassword());
 
-        user.setPassword(encodedPassword);
+        createUserRequestDto.setPassword(encodedPassword);
 
+        User user = mapToUser(createUserRequestDto);
         userRepository.save(user);
         return mapTouserResponseDto(user);
     }
@@ -37,4 +39,14 @@ public class UserService {
         userResponseDto.setName(user.getName());
         return userResponseDto;
     }
-}
+
+    public User mapToUser(CreateUserRequestDto createUserRequestDto) {
+        User user = new User();
+        user.setEmail(createUserRequestDto.getEmail());
+        user.setName(createUserRequestDto.getName());
+        user.setPassword(createUserRequestDto.getPassword());
+        user.setRole(UserRole.CUSTOMER);
+        return user;
+    }
+    }
+
