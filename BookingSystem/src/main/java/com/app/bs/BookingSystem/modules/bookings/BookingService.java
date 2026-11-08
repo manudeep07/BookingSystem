@@ -8,18 +8,24 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.cglib.core.Local;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import com.app.bs.BookingSystem.exception.ConflictException;
 import com.app.bs.BookingSystem.exception.ForbiddenException;
 import com.app.bs.BookingSystem.modules.bookingSeat.BookingSeat;
 import com.app.bs.BookingSystem.modules.bookingSeat.BookingSeatRepository;
 import com.app.bs.BookingSystem.modules.bookings.DTO.BookingResponseDto;
 import com.app.bs.BookingSystem.modules.bookings.DTO.CancelBookingRequestDTO;
 import com.app.bs.BookingSystem.modules.bookings.DTO.CreateBookingRequestDTO;
+import com.app.bs.BookingSystem.modules.bookings.DTO.MyBookingDto;
+import com.app.bs.BookingSystem.modules.languages.Language;
+import com.app.bs.BookingSystem.modules.movies.Movie;
 import com.app.bs.BookingSystem.modules.payments.PaymentService;
 import com.app.bs.BookingSystem.modules.payments.DTO.CreateOrderResponseDto;
+import com.app.bs.BookingSystem.modules.screens.Screen;
+import com.app.bs.BookingSystem.modules.screens.ScreenRepository;
 import com.app.bs.BookingSystem.modules.seats.Seat;
 import com.app.bs.BookingSystem.modules.seats.SeatRepository;
 import com.app.bs.BookingSystem.modules.showSeats.ShowSeat;
@@ -27,6 +33,7 @@ import com.app.bs.BookingSystem.modules.showSeats.ShowSeatRepository;
 import com.app.bs.BookingSystem.modules.showSeats.ShowSeatStatus;
 import com.app.bs.BookingSystem.modules.shows.Show;
 import com.app.bs.BookingSystem.modules.shows.ShowRepository;
+import com.app.bs.BookingSystem.modules.theater.Theater;
 import com.app.bs.BookingSystem.modules.user.User;
 import com.razorpay.RazorpayException;
 
@@ -61,18 +68,14 @@ public class BookingService {
         List<ShowSeat> showSeats = showSeatRepository.findByShowAndSeatIdInAndSeatStatus(show, seatIds,
                 ShowSeatStatus.AVAILABLE);
         if (showSeats.size() != seatIds.size())
-            throw new RuntimeException("seats are already booked/reserved by another user");
+            throw new ConflictException(
+                    "Some of the seats you selected are already reserved or booked. Please choose different seats.");
 
         List<BookingSeat> bookingSeats = new ArrayList<>();
         BigDecimal totalAmount = BigDecimal.ZERO;
         for (ShowSeat showSeat : showSeats) {
             totalAmount = totalAmount.add(showSeat.getPrice());
-            try {
-                showSeat.setSeatStatus(ShowSeatStatus.RESERVED);
-            } catch (ObjectOptimisticLockingFailureException e) {
-                throw new RuntimeException("Seat was reserved by another user.");
-            }
-
+            showSeat.setSeatStatus(ShowSeatStatus.RESERVED);
             BookingSeat bookingSeat = new BookingSeat();
             bookingSeat.setSeat(showSeat.getSeat());
             bookingSeat.setBooking(booking);
@@ -226,4 +229,43 @@ public class BookingService {
                 booking.getExpiresAt());
     }
 
+    public List<MyBookingDto> getMyBookings(User user) {
+        List<MyBookingDto> myBookings = new ArrayList<>();
+        List<Booking> allBookings = bookingRepository.findByUser(user);
+        MapToMyBookingDto(myBookings, allBookings);
+        return myBookings;
+    }
+
+    public void MapToMyBookingDto(List<MyBookingDto> myBookings, List<Booking> allBookings) {
+        for (Booking booking : allBookings) {
+            if (booking.getStatus() == BookingStatus.EXPIRED || booking.getStatus() == BookingStatus.PENDING)
+                continue;
+            Show show = showRepository.findById(booking.getShow().getId())
+                    .orElseThrow(() -> new RuntimeException("Show not found"));
+
+            List<BookingSeat> bookingSeats = bookingSeatRepository.findByBooking(booking);
+            List<Seat> seats = bookingSeats.stream()
+                    .map(BookingSeat::getSeat)
+                    .toList();
+            Screen screen = show.getScreen();
+            Movie movie = show.getMovie();
+            Theater theater = screen.getTheater();
+            Language language = show.getLanguage();
+            LocalDateTime startTime = show.getStartTime();
+            LocalDateTime endTime = show.getEndTime();
+            MyBookingDto myBookingDto = new MyBookingDto();
+
+            myBookingDto.setMovieName(movie.getName());
+            myBookingDto.setTotalAmount(booking.getTotalAmount());
+            myBookingDto.setStatus(booking.getStatus());
+            myBookingDto.setLanguage(language.getName());
+            myBookingDto.setStartTime(startTime);
+            myBookingDto.setEndTime(endTime);
+            myBookingDto.setScreenName(screen.getScreenName());
+            myBookingDto.setTheaterName(theater.getName());
+            myBookingDto.setSeats(seats);
+            myBookings.add(myBookingDto);
+        }
+
+    }
 }

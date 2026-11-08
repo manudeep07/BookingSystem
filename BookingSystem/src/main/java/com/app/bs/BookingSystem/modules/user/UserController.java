@@ -32,6 +32,11 @@ public class UserController {
         return userService.getUsers();
     }
 
+    @PostMapping()
+    public String forgotPass(String email) {
+        return userService.forgotPass(email);
+    }
+
 
     
     

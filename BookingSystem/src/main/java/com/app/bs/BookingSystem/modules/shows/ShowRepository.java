@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface ShowRepository extends JpaRepository<Show, UUID> {
     // Show findByShow(Show show);
     List<Show> findByMovie(Movie movie);
+    // Show findByShow(Show show);
 }

@@ -49,5 +49,6 @@ public class Show {
     private LocalDateTime endTime;
 
     @OneToMany(mappedBy = "show")
+    @JsonIgnore 
     private List<Booking> bookings;
 }

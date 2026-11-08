@@ -34,8 +34,10 @@ public class Screen {
     private Theater theater;
 
     @OneToMany(mappedBy = "screen")
+    @JsonIgnore 
     private List<Show> shows;
 
     @OneToMany(mappedBy = "screen")
+    @JsonIgnore 
     private List<Seat> seats;
 }

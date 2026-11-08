@@ -1,9 +1,11 @@
 package com.app.bs.BookingSystem.modules.bookings;
 
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.app.bs.BookingSystem.modules.bookings.DTO.BookingResponseDto;
 import com.app.bs.BookingSystem.modules.bookings.DTO.CancelBookingRequestDTO;
 import com.app.bs.BookingSystem.modules.bookings.DTO.CreateBookingRequestDTO;
+import com.app.bs.BookingSystem.modules.bookings.DTO.MyBookingDto;
 import com.app.bs.BookingSystem.modules.payments.DTO.CreateOrderResponseDto;
 import com.app.bs.BookingSystem.modules.user.CustomUserDetails;
 
@@ -35,6 +38,11 @@ public class BookingController {
      ) {
        
         return bookingService.cancelBooking(cancelBookingRequestDTO,userDetails.getUser());
+    }
+
+    @GetMapping("/me")
+    public List<MyBookingDto> getMyBookings(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        return bookingService.getMyBookings(userDetails.getUser());
     }
     
 
