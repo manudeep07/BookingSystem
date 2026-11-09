@@ -3,6 +3,7 @@ package com.app.bs.BookingSystem.modules.bookings.DTO;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import com.app.bs.BookingSystem.modules.bookings.BookingStatus;
 import com.app.bs.BookingSystem.modules.seats.Seat;
@@ -21,7 +22,8 @@ import lombok.Setter;
 @Setter 
 public class MyBookingDto {
 
-    @Enumerated(EnumType.STRING)
+    private UUID bookingId;
+
     private BookingStatus status;
 
     LocalDateTime startTime;
@@ -36,7 +38,7 @@ public class MyBookingDto {
 
     private String language;
 
-    private List<Seat> seats;
+    private List<SeatInfo> seats;
 
     @Column(nullable = false, precision = 10, scale = 2, name = "total_amount")
     private BigDecimal totalAmount;

@@ -10,7 +10,7 @@ import com.app.bs.BookingSystem.modules.user.User;
 
 @Repository 
 public interface ResetTokenRepository extends JpaRepository<ResetToken,UUID>{
-    Optional<ResetToken> findByToken(String token);
+    Optional<ResetToken> findByResetToken(String token);
 
     void deleteByUser(User user);
 }

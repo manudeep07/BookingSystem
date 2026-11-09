@@ -61,7 +61,9 @@ public class SecurityConfig {
                                                 // Public
                                                 .requestMatchers(
                                                                 "/auth/login",
-                                                                "/users")
+                                                                "/users",
+                                                        "/auth/forgot-password",
+                                                "/auth/reset-password")
                                                 .permitAll()
 
                                                 // Everything else requires authentication

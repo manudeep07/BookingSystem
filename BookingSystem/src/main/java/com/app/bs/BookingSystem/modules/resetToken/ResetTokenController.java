@@ -13,8 +13,5 @@ public class ResetTokenController {
         this.resetTokenService = resetTokenService;
     }
 
-    @PostMapping("/reset-password")
-    public String resetPassword(@RequestBody String token) {
-        return "Sucess";
-    }
+    
 }

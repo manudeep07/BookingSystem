@@ -1,6 +1,7 @@
 package com.app.bs.BookingSystem.modules.bookings;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -16,6 +17,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -40,7 +42,7 @@ public class Booking {
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    @JsonIgnore 
+    @JsonIgnore
     private User user;
 
     @Enumerated(EnumType.STRING)
@@ -48,7 +50,12 @@ public class Booking {
 
     @Column(nullable = false, precision = 10, scale = 2, name = "total_amount")
     private BigDecimal totalAmount;
-    
+
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
+
+    @Column(name = "created_at",nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    
 }

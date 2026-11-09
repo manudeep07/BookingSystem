@@ -1,12 +1,12 @@
 package com.app.bs.BookingSystem.modules.user;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.app.bs.BookingSystem.exception.ForbiddenException;
-import com.app.bs.BookingSystem.modules.auth.ResetPassword;
 import com.app.bs.BookingSystem.modules.resetToken.ResetTokenService;
 import com.app.bs.BookingSystem.modules.user.DTO.CreateUserRequestDto;
 import com.app.bs.BookingSystem.modules.user.DTO.UserResponseDto;
@@ -55,9 +55,16 @@ public class UserService {
     }
 
     public String forgotPass(String email) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new ForbiddenException("User doesn't exists"));
-        String token = resetTokenService.generateToken(user);
-        return token;
+
+    User user = userRepository.findByEmail(email).orElse(null);
+    
+    if (user == null) {
+        return " ";
     }
+
+    String token = resetTokenService.createToken(user);
+    return token;
+    // emailService.sendResetEmail(user.getEmail(), token);
+}
 
 }

@@ -1,8 +1,10 @@
 package com.app.bs.BookingSystem.modules.bookings;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -20,6 +22,7 @@ import com.app.bs.BookingSystem.modules.bookings.DTO.BookingResponseDto;
 import com.app.bs.BookingSystem.modules.bookings.DTO.CancelBookingRequestDTO;
 import com.app.bs.BookingSystem.modules.bookings.DTO.CreateBookingRequestDTO;
 import com.app.bs.BookingSystem.modules.bookings.DTO.MyBookingDto;
+import com.app.bs.BookingSystem.modules.bookings.DTO.SeatInfo;
 import com.app.bs.BookingSystem.modules.languages.Language;
 import com.app.bs.BookingSystem.modules.movies.Movie;
 import com.app.bs.BookingSystem.modules.payments.PaymentService;
@@ -37,6 +40,7 @@ import com.app.bs.BookingSystem.modules.theater.Theater;
 import com.app.bs.BookingSystem.modules.user.User;
 import com.razorpay.RazorpayException;
 
+import io.jsonwebtoken.lang.Arrays;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -179,6 +183,7 @@ public class BookingService {
         booking.setUser(user);
         booking.setStatus(BookingStatus.PENDING);
         booking.setExpiresAt(LocalDateTime.now().plusMinutes(5));
+        booking.setCreatedAt(LocalDateTime.now());
         return booking;
     }
 
@@ -230,42 +235,60 @@ public class BookingService {
     }
 
     public List<MyBookingDto> getMyBookings(User user) {
-        List<MyBookingDto> myBookings = new ArrayList<>();
-        List<Booking> allBookings = bookingRepository.findByUser(user);
-        MapToMyBookingDto(myBookings, allBookings);
-        return myBookings;
+        List<Booking> allBookings = bookingRepository.findByUserAndStatusIn(user,
+                List.of(BookingStatus.BOOKED, BookingStatus.CANCELLED));
+        List<BookingSeat> allBookingSeats = bookingSeatRepository.findByBookingIn(allBookings);
+        Map<UUID, List<Seat>> seatsMap = allBookingSeats.stream()
+                .collect(Collectors.groupingBy(
+                        bs -> bs.getBooking().getId(),
+                        Collectors.mapping(
+                                BookingSeat::getSeat,
+                                Collectors.toList())));
+        return mapToMyBookingDto(allBookings, seatsMap);
     }
 
-    public void MapToMyBookingDto(List<MyBookingDto> myBookings, List<Booking> allBookings) {
-        for (Booking booking : allBookings) {
-            if (booking.getStatus() == BookingStatus.EXPIRED || booking.getStatus() == BookingStatus.PENDING)
-                continue;
-            Show show = showRepository.findById(booking.getShow().getId())
-                    .orElseThrow(() -> new RuntimeException("Show not found"));
+    private List<MyBookingDto> mapToMyBookingDto(
+            List<Booking> allBookings,
+            Map<UUID, List<Seat>> seatsMap) {
 
-            List<BookingSeat> bookingSeats = bookingSeatRepository.findByBooking(booking);
-            List<Seat> seats = bookingSeats.stream()
-                    .map(BookingSeat::getSeat)
-                    .toList();
+        List<MyBookingDto> myBookings = new ArrayList<>();
+
+        for (Booking booking : allBookings) {
+
+            Show show = booking.getShow();
+
             Screen screen = show.getScreen();
             Movie movie = show.getMovie();
             Theater theater = screen.getTheater();
             Language language = show.getLanguage();
-            LocalDateTime startTime = show.getStartTime();
-            LocalDateTime endTime = show.getEndTime();
-            MyBookingDto myBookingDto = new MyBookingDto();
 
-            myBookingDto.setMovieName(movie.getName());
-            myBookingDto.setTotalAmount(booking.getTotalAmount());
-            myBookingDto.setStatus(booking.getStatus());
-            myBookingDto.setLanguage(language.getName());
-            myBookingDto.setStartTime(startTime);
-            myBookingDto.setEndTime(endTime);
-            myBookingDto.setScreenName(screen.getScreenName());
-            myBookingDto.setTheaterName(theater.getName());
-            myBookingDto.setSeats(seats);
-            myBookings.add(myBookingDto);
+            MyBookingDto dto = new MyBookingDto();
+
+            dto.setBookingId(booking.getId());
+            dto.setMovieName(movie.getName());
+            dto.setTotalAmount(booking.getTotalAmount());
+            dto.setStatus(booking.getStatus());
+            dto.setLanguage(language.getName());
+
+            dto.setStartTime(show.getStartTime());
+            dto.setEndTime(show.getEndTime());
+
+            dto.setScreenName(screen.getScreenName());
+            dto.setTheaterName(theater.getName());
+
+            List<SeatInfo> seatInfos = seatsMap
+                    .getOrDefault(booking.getId(), Collections.emptyList())
+                    .stream()
+                    .map(seat -> new SeatInfo(
+                            seat.getName(),
+                            seat.getCategory()))
+                    .toList();
+
+            dto.setSeats(seatInfos);
+
+            myBookings.add(dto);
         }
 
+        return myBookings;
     }
 }
