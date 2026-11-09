@@ -1,7 +1,6 @@
 package com.app.bs.BookingSystem.modules.bookings;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,7 +9,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.springframework.cglib.core.Local;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +26,6 @@ import com.app.bs.BookingSystem.modules.movies.Movie;
 import com.app.bs.BookingSystem.modules.payments.PaymentService;
 import com.app.bs.BookingSystem.modules.payments.DTO.CreateOrderResponseDto;
 import com.app.bs.BookingSystem.modules.screens.Screen;
-import com.app.bs.BookingSystem.modules.screens.ScreenRepository;
 import com.app.bs.BookingSystem.modules.seats.Seat;
 import com.app.bs.BookingSystem.modules.seats.SeatRepository;
 import com.app.bs.BookingSystem.modules.showSeats.ShowSeat;
@@ -40,7 +37,6 @@ import com.app.bs.BookingSystem.modules.theater.Theater;
 import com.app.bs.BookingSystem.modules.user.User;
 import com.razorpay.RazorpayException;
 
-import io.jsonwebtoken.lang.Arrays;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -234,9 +230,13 @@ public class BookingService {
                 booking.getExpiresAt());
     }
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public List<MyBookingDto> getMyBookings(User user) {
-        List<Booking> allBookings = bookingRepository.findByUserAndStatusIn(user,
+        List<Booking> allBookings = bookingRepository.findByUserAndStatusInOrderByCreatedAtDesc(user,
                 List.of(BookingStatus.BOOKED, BookingStatus.CANCELLED));
+
+        if (allBookings.isEmpty())
+            return List.of();
         List<BookingSeat> allBookingSeats = bookingSeatRepository.findByBookingIn(allBookings);
         Map<UUID, List<Seat>> seatsMap = allBookingSeats.stream()
                 .collect(Collectors.groupingBy(

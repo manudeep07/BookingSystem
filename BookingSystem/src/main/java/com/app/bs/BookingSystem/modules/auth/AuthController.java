@@ -9,10 +9,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.app.bs.BookingSystem.modules.auth.DTO.ForgotPasswordRequest;
+import com.app.bs.BookingSystem.modules.auth.DTO.ResetPasswordRequestDto;
 import com.app.bs.BookingSystem.modules.resetToken.ResetTokenService;
 import com.app.bs.BookingSystem.modules.user.UserService;
 import com.app.bs.BookingSystem.security.JwtService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -37,15 +40,15 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public String forgotPass(@RequestBody String email) {
-         System.out.println(email);
-         System.out.println(userService.forgotPass(email));
+    public String forgotPass(@Valid @RequestBody ForgotPasswordRequest req) {
+         System.out.println();
+         System.out.println(userService.forgotPass(req.getEmail()));
          return "if that email is registered,reset link will be sent";
     }
 
     @PostMapping("/reset-password")
-    public String resetPassword(@RequestBody String token,String newPassword) {
-        resetTokenService.resetPassword(token, newPassword);
+    public String resetPassword(@Valid @RequestBody ResetPasswordRequestDto req) {
+        resetTokenService.resetPassword(req.getToken(), req.getNewPassword());
         return "password reset successfully";
     }
 }

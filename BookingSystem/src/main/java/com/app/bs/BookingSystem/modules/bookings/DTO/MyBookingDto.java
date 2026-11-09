@@ -6,11 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.app.bs.BookingSystem.modules.bookings.BookingStatus;
-import com.app.bs.BookingSystem.modules.seats.Seat;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,6 +36,5 @@ public class MyBookingDto {
 
     private List<SeatInfo> seats;
 
-    @Column(nullable = false, precision = 10, scale = 2, name = "total_amount")
     private BigDecimal totalAmount;
 }

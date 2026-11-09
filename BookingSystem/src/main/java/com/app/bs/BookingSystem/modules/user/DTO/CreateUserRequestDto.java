@@ -2,6 +2,7 @@ package com.app.bs.BookingSystem.modules.user.DTO;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,5 +22,6 @@ public class CreateUserRequestDto {
     private  String email;
 
     @NotBlank (message = "password cannot be empty")
+    @Size (min = 8)
     private  String password;
 }

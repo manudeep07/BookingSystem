@@ -4,8 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import org.hibernate.query.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -19,7 +17,7 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             "show.screen.theater",
             "show.language"
     })
-    List<Booking> findByUserAndStatusIn(
+    List<Booking> findByUserAndStatusInOrderByCreatedAtDesc(
             User user,
             List<BookingStatus> statuses
     );
