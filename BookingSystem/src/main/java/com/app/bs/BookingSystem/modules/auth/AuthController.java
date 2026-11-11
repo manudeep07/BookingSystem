@@ -1,5 +1,7 @@
 package com.app.bs.BookingSystem.modules.auth;
 
+import javax.management.Notification;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.app.bs.BookingSystem.modules.auth.DTO.ForgotPasswordRequest;
 import com.app.bs.BookingSystem.modules.auth.DTO.ResetPasswordRequestDto;
+import com.app.bs.BookingSystem.modules.notification.NotificationService;
 import com.app.bs.BookingSystem.modules.resetToken.ResetTokenService;
 import com.app.bs.BookingSystem.modules.user.UserService;
 import com.app.bs.BookingSystem.security.JwtService;
@@ -27,6 +30,7 @@ public class AuthController {
     private final JwtService jwtService;
     private final UserService userService;
     private final ResetTokenService resetTokenService;
+    private final NotificationService notificationService;
 
     @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest request) {
@@ -42,7 +46,8 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public String forgotPass(@Valid @RequestBody ForgotPasswordRequest req) {
          System.out.println();
-         System.out.println(userService.forgotPass(req.getEmail()));
+         String token = userService.forgotPass(req.getEmail());
+         notificationService.sendPasswordResetEmail(req.getEmail(), token);
          return "if that email is registered,reset link will be sent";
     }
 
