@@ -167,7 +167,6 @@ public class BookingService {
                 showSeat.setSeatStatus(ShowSeatStatus.AVAILABLE);
             }
 
-           
         }
 
         return mapToBookingResponseDto(booking);
@@ -327,7 +326,7 @@ public class BookingService {
         for (BookingSeat bookingSeat : bookingSeats) {
             String category = bookingSeat.getSeat().getCategory();
             String name = bookingSeat.getSeat().getName();
-            seatInfos.add(new SeatInfo(category, name));
+            seatInfos.add(new SeatInfo(name, category));
         }
 
         return new BookingConfirmedEvent(
@@ -335,6 +334,9 @@ public class BookingService {
                 booking.getId(),
                 booking.getShow().getMovie().getName(),
                 seatInfos,
-                booking.getShow().getStartTime());
+                booking.getShow().getStartTime(),
+                booking.getShow().getScreen().getTheater().getName(),
+                booking.getShow().getScreen().getScreenName(),
+                booking.getTotalAmount().doubleValue());
     }
 }

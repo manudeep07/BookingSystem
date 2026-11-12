@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface BookingSeatRepository extends JpaRepository<BookingSeat, UUID> {
+    @EntityGraph(attributePaths = { "seat" })
     List<BookingSeat> findByBooking(Booking booking);
 
     @EntityGraph(attributePaths = { "seat" })

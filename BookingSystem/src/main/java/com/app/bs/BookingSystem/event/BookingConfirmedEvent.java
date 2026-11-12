@@ -11,7 +11,10 @@ public record BookingConfirmedEvent(
         UUID bookingId,
         String movieName,
         List<SeatInfo> seatInfos,
-        LocalDateTime showStartTime
+        LocalDateTime showStartTime,
+        String theaterName,
+        String screenName,
+        double totalAmount
 ) {
     public BookingConfirmedEvent {
         seatInfos = List.copyOf(seatInfos);

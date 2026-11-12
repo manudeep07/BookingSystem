@@ -38,7 +38,10 @@ public class BookingConfirmedEventListener {
                     event.bookingId(),
                     event.movieName(),
                     event.seatInfos(),
-                    event.showStartTime()
+                    event.showStartTime(),
+                    event.theaterName(),
+                    event.screenName(),
+                    event.totalAmount()
             );
 
         } catch (MailException e) {

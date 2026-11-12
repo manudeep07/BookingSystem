@@ -3,9 +3,11 @@ package com.app.bs.BookingSystem.modules.notification;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.mail.MailException;
@@ -50,46 +52,64 @@ public class NotificationService {
                     "Password Reset Request",
                     body);
         } catch (MailException e) {
-            log.error("Failed to send booking confirmation email for booking ID: {}",
+            log.error("Failed to send password reset email",
                     e);
         }
     }
 
-    @Async
+    
     public void sendBookingConfirmation(
             String email,
             UUID bookingId,
-            String movie,
+            String movieName,
             List<SeatInfo> seatInfos,
-            LocalDateTime showStartTime) {
+            LocalDateTime showStartTime,
+            String theaterName,
+            String screenName,
+            double totalAmount) throws MailException{
 
-        try {
+        
             String seats = seatInfos.stream()
-                    .map(SeatInfo::getName)
+                    .map(SeatInfo::name)
                     .collect(Collectors.joining(", "));
 
-            String body = """
-                    Your booking has been confirmed!
+           DateTimeFormatter formatter =
+                DateTimeFormatter.ofPattern("dd MMMM yyyy, hh:mm a");
 
-                    Booking ID: %s
+        String formattedShowTime = showStartTime.format(formatter);
 
-                    Movie : %s
+        String body = """
+                Your booking has been confirmed!
 
-                    Seats: %s
+                Booking ID: %s
 
-                    Show Time: %s
+                Movie: %s
 
-                    Thank you for choosing us.
-                    """.formatted(bookingId,movie, seats, showStartTime);
+                Theater: %s
+
+                Screen: %s
+
+                Seats: %s
+
+                Show Time: %s
+
+                Total Amount: ₹%.2f
+
+                Thank you for choosing us.
+                """.formatted(
+                bookingId,
+                movieName,
+                theaterName,
+                screenName,
+                seats,
+                formattedShowTime,
+                totalAmount
+        );
 
             emailService.sendEmail(
                     email,
                     "Booking Confirmation",
                     body);
 
-        } catch (MailException e) {
-            log.error("Failed to send booking confirmation email for booking ID: {}",
-                    bookingId, e);
-        }
     }
 }
