@@ -9,9 +9,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import com.app.bs.BookingSystem.event.BookingConfirmedEvent;
 import com.app.bs.BookingSystem.exception.ConflictException;
 import com.app.bs.BookingSystem.exception.ForbiddenException;
 import com.app.bs.BookingSystem.modules.bookingSeat.BookingSeat;
@@ -46,15 +48,18 @@ public class BookingService {
     private final ShowRepository showRepository;
     private final ShowSeatRepository showSeatRepository;
     private final BookingSeatRepository bookingSeatRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public BookingService(BookingRepository bookingRepository, ShowRepository showRepository,
             SeatRepository seatRepository, ShowSeatRepository showSeatRepository,
-            BookingSeatRepository bookingSeatRepository, PaymentService paymentService) {
+            BookingSeatRepository bookingSeatRepository, PaymentService paymentService,
+            ApplicationEventPublisher eventPublisher) {
         this.bookingRepository = bookingRepository;
         this.showRepository = showRepository;
         this.showSeatRepository = showSeatRepository;
         this.bookingSeatRepository = bookingSeatRepository;
         this.paymentService = paymentService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -96,12 +101,17 @@ public class BookingService {
     }
 
     @Transactional
-    public BookingResponseDto confirmBooking(UUID bookingId, String paymentStatus, User user) {
+    public BookingResponseDto confirmBooking(
+            UUID bookingId,
+            String paymentStatus,
+            User user) {
+
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking id doesn't exist"));
 
-        if (booking.getStatus() != BookingStatus.PENDING && booking.getStatus() != BookingStatus.EXPIRED) {
-            throw new RuntimeException("Booking is no longer pending ");
+        if (booking.getStatus() != BookingStatus.PENDING
+                && booking.getStatus() != BookingStatus.EXPIRED) {
+            throw new RuntimeException("Booking is no longer pending");
         }
 
         if (!booking.getUser().getId().equals(user.getId())) {
@@ -109,38 +119,55 @@ public class BookingService {
         }
 
         List<BookingSeat> bookingSeats = bookingSeatRepository.findByBooking(booking);
+
         List<Seat> seats = bookingSeats.stream()
                 .map(BookingSeat::getSeat)
                 .toList();
-        List<ShowSeat> showSeats = showSeatRepository.findByShowAndSeatIn(booking.getShow(), seats);
+
+        List<ShowSeat> showSeats = showSeatRepository.findByShowAndSeatIn(
+                booking.getShow(), seats);
+
         if ("success".equals(paymentStatus)) {
+
+            boolean seatsAvailable = true;
+
+            // Check availability ONLY if the booking expired
             if (booking.getStatus() == BookingStatus.EXPIRED) {
-                ArrayList<ShowSeat> tempShowSeats = new ArrayList<>();
-                for (ShowSeat showSeat : showSeats) {
-                    if (showSeat.getSeatStatus() != ShowSeatStatus.AVAILABLE) {
-                        for (ShowSeat ss : tempShowSeats) {
-                            ss.setSeatStatus(ShowSeatStatus.AVAILABLE);
-                        }
-                        booking.setStatus(BookingStatus.FAILED);
-                        paymentService.refundPayment(booking);
-                        return mapToBookingResponseDto(booking);
-                    } else {
-                        showSeat.setSeatStatus(ShowSeatStatus.BOOKED);
-                        tempShowSeats.add(showSeat);
-                    }
-                }
-                booking.setStatus(BookingStatus.BOOKED);
-            } else {
+
+                seatsAvailable = showSeats.stream()
+                        .allMatch(ss -> ss.getSeatStatus() == ShowSeatStatus.AVAILABLE);
+            }
+
+            if (seatsAvailable) {
+
                 for (ShowSeat showSeat : showSeats) {
                     showSeat.setSeatStatus(ShowSeatStatus.BOOKED);
                 }
+
                 booking.setStatus(BookingStatus.BOOKED);
+
+                // One success event for both PENDING and EXPIRED
+                eventPublisher.publishEvent(
+                        createBookingConfirmedEvent(booking, bookingSeats));
+
+            } else {
+
+                booking.setStatus(BookingStatus.FAILED);
+
+                // Initiate refund
+                paymentService.refundPayment(booking);
+
             }
+
         } else {
+
             booking.setStatus(BookingStatus.FAILED);
+
             for (ShowSeat showSeat : showSeats) {
                 showSeat.setSeatStatus(ShowSeatStatus.AVAILABLE);
             }
+
+           
         }
 
         return mapToBookingResponseDto(booking);
@@ -290,5 +317,24 @@ public class BookingService {
         }
 
         return myBookings;
+    }
+
+    private BookingConfirmedEvent createBookingConfirmedEvent(
+            Booking booking,
+            List<BookingSeat> bookingSeats) {
+
+        List<SeatInfo> seatInfos = new ArrayList<>();
+        for (BookingSeat bookingSeat : bookingSeats) {
+            String category = bookingSeat.getSeat().getCategory();
+            String name = bookingSeat.getSeat().getName();
+            seatInfos.add(new SeatInfo(category, name));
+        }
+
+        return new BookingConfirmedEvent(
+                booking.getUser().getEmail(),
+                booking.getId(),
+                booking.getShow().getMovie().getName(),
+                seatInfos,
+                booking.getShow().getStartTime());
     }
 }

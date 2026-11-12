@@ -7,6 +7,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.app.bs.BookingSystem.exception.ForbiddenException;
+import com.app.bs.BookingSystem.modules.notification.NotificationService;
 import com.app.bs.BookingSystem.modules.resetToken.ResetTokenService;
 import com.app.bs.BookingSystem.modules.user.DTO.CreateUserRequestDto;
 import com.app.bs.BookingSystem.modules.user.DTO.UserResponseDto;
@@ -20,6 +21,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final ResetTokenService resetTokenService;
+    private final NotificationService notificationService;
 
     public UserResponseDto createUser(CreateUserRequestDto createUserRequestDto) {
 
@@ -54,17 +56,12 @@ public class UserService {
         return user;
     }
 
-    public String forgotPass(String email) {
-
-    User user = userRepository.findByEmail(email).orElse(null);
-    
-    if (user == null) {
-        return " ";
+    // UserService
+    public void forgotPass(String email) {
+        userRepository.findByEmail(email).ifPresent(user -> {
+            String token = resetTokenService.createToken(user);
+            notificationService.sendPasswordResetEmail(user.getEmail(), token);
+        });
     }
-
-    String token = resetTokenService.createToken(user);
-    return token;
-    // emailService.sendResetEmail(user.getEmail(), token);
-}
 
 }

@@ -34,4 +34,4 @@ build/
 ../booking-system-frontend/
 ../.vscode/
 db.sql
-/BookingSystem/BookingSystem/src/main/resources/application.yml
+/src/main/resources/application.yml

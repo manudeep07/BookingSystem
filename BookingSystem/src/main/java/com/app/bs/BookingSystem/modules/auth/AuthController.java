@@ -45,9 +45,7 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public String forgotPass(@Valid @RequestBody ForgotPasswordRequest req) {
-         System.out.println();
-         String token = userService.forgotPass(req.getEmail());
-         notificationService.sendPasswordResetEmail(req.getEmail(), token);
+         userService.forgotPass(req.getEmail());
          return "if that email is registered,reset link will be sent";
     }
 
